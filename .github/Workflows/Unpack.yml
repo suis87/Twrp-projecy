@@ -1,0 +1,39 @@
+name: Unpack TWRP Recovery
+
+on:
+  workflow_dispatch: # يتيح لك تشغيل الفك يدوياً بزر واحد
+
+jobs:
+  unpack_twrp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Tools
+        run: |
+          sudo apt update
+          sudo apt install -y cpio coreutils file
+
+      - name: Download MagiskBoot Tool
+        run: |
+          wget -O mboot https://github.com
+          chmod +x mboot
+
+      - name: Unpack Recovery Image
+        run: |
+          # فك ملف الـ TWRP باستخدام أداة magiskboot المتوافقة
+          ./mboot unpack 1.img
+          
+          # إنشاء مجلد للـ ramdisk وفكه برمجياً بالكامل
+          mkdir -p ramdisk_files
+          cd ramdisk_files
+          cpio -i < ../ramdisk.cpio 2>/dev/null || true
+          
+      - name: Upload Unpacked Files As Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: twrp-unpacked-ramdisk
+          path: |
+            ramdisk_files/
+            kernel
